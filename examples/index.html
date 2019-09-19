@@ -1,0 +1,173 @@
+<html>
+	<head>
+		<meta charset='utf-8'>
+
+		<title>CryptoPro test page</title>
+
+		<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/uikit/3.2.0/css/uikit.min.css' />
+
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/uikit/3.2.0/js/uikit.min.js'></script>
+		<script src='https://www.cryptopro.ru/sites/default/files/products/cades/cadesplugin_api.js'></script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.8/angular.min.js'></script>
+		<script src='/crypto.js'></script>
+		<script>
+			const app = angular.module('App', []);
+
+			app.directive('customOnChange', () => {
+				return {
+					restrict: 'A',
+					link: (scope, element, attrs) => {
+						const onChangeHandler = scope.$eval(attrs.customOnChange);
+						element.on('change', onChangeHandler);
+						element.on('$destroy', () => {
+							element.off();
+						});
+					}
+				};
+			});
+
+			app.controller('Crypto', ($scope) => {
+				$scope.certs = [];
+				$scope.selectedCert = null;
+				$scope.signInfo = null;
+				$scope.data = 'Test data';
+				$scope.files = null;
+				$scope.sign = '';
+				$scope.pluginReady = false;
+
+				let crypto = new CryptoHelper();
+
+				crypto.init().then(() => {
+					$scope.pluginReady = true;
+
+					crypto.getCertificates().then((certs) => {
+						$scope.certs = certs;
+						$scope.$digest();
+					});
+				});
+				
+				$scope.doSign = (data, download = false) => {
+					crypto
+						.sign($scope.selectedCert.$original, data)
+						.then((signMessage) => {
+							$scope.sign = signMessage;
+
+							if (download) {
+								if (signMessage instanceof Array) {
+									signMessage.forEach((sign, i) => {
+										downloadData(sign, `${$scope.files[i].name}.sig`, 'text/plain');
+									});
+								} else {
+									downloadData(signMessage, `signature.sig`, 'text/plain');
+								}
+							}
+
+							$scope.$digest();
+						});
+				};
+
+				$scope.doVerify = () => {
+					crypto
+						.verify($scope.data, $scope.sign)
+						.then((verifyResult) => {
+							if (verifyResult) {
+								$scope.signInfo = verifyResult;
+								$scope.$digest();
+							}
+						});
+				};
+
+				$scope.openFile = ($event) => {
+					$scope.files = $event.target.files;
+					$scope.$digest();
+				};
+
+				function downloadData(data, name, type) {
+					const file = new Blob([data], { type });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(file);
+					link.download = name;
+					document.body.appendChild(link);
+					link.click();
+					link.remove();
+				}
+
+			});
+		</script>
+	</head>
+	<body ng-app='App'>
+		<div ng-controller='Crypto' class='uk-text-small'>
+			
+			<form class='uk-form-horizontal uk-padding'>
+				<div class='uk-margin'>
+					<span ng-if='pluginReady' class='uk-alert-success'>
+						<p>Плагин готов</p>
+					</span>
+					<span ng-if='!pluginReady' class='uk-alert-danger'>
+						<p>Плагин не готов</p>
+					</span>
+				</div>
+				
+				<div class='uk-margin'>
+					<label class='uk-form-label'>Сертификат</label>
+					<div class='uk-form-controls'>
+						<select class='uk-select' ng-model='selectedCert'>
+							<option ng-repeat='cert in certs' ng-value='cert'>{{ cert.subject.name }}</li>
+						</select>
+
+						<ul class='uk-list'>
+							<li ng-repeat='(k, v) in selectedCert.subject'>
+								<span class='uk-text-bold'>{{k}}:</span>
+								<span>{{v}}</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+
+				<h3>Подписание текстовых данных</h3>
+
+				<div class='uk-margin'>
+					<label class='uk-form-label'>Текст</label>
+					<div class='uk-form-controls'>
+						<textarea ng-model='data' class='uk-textarea uk-margin-small-bottom'></textarea>
+						<button class='uk-button uk-button-primary' ng-click='doSign(data)' ng-disabled='!selectedCert || !data'>Подписать</button>
+					</div>
+				</div>
+
+				<div class='uk-margin'>
+					<label class='uk-form-label'>Подпись</label>
+					<div class='uk-form-controls'>
+						<textarea class='uk-textarea' ng-model='sign'></textarea>
+					</div>
+				</div>
+						
+				<div class='uk-margin'>
+					<div class='uk-form-controls'>
+						<button class='uk-button uk-button-secondary' ng-click='doVerify()'>Проверить</button>
+
+						<ul class='uk-list'>
+							<li ng-repeat='sign in signInfo'>
+								<span class='uk-text-bold'>{{sign.ts}}:</span>
+								<span>{{sign.cert.subject.name}}</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+
+				<hr class='uk-divider-icon'>
+
+				<h3>Подписание файлов</h3>
+
+				<div class='uk-margin'>
+					<div uk-form-custom>
+						<input id='selectFileInput' type='file' custom-on-change='openFile' multiple>
+						<input class='uk-input uk-form-width-small' ng-if='files' value='{{ files.length }} файлов' disabled>
+						<button class='uk-button uk-button-default'>Выбрать файл</button>
+					</div>
+					<button class='uk-button uk-button-primary' ng-click='doSign(files, true)' ng-disabled='!selectedCert || !files'>Подписать</button>
+				</div>
+
+			</form>
+		</div>
+	</body>
+</html>
