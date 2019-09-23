@@ -71,7 +71,7 @@ let certificates = await crypto.getCertificates();
 
 #### Подписание
 
-Класс `Crypto` содержит несколько методов подписания данных:
+Класс `CryptoHelper` содержит несколько методов подписания данных:
 
 |Метод|Аргументы|Описание|
 |---|---|---|
@@ -110,7 +110,7 @@ let sign = await crypto.sign(certificate, filesInput.files[0]);
 let data = 'My secret string';
 let sign = 'MIIIgAYJKoZIhvc...';
 
-let signInfo = await crypto.verify(data, sign);
+let signInfo = await crypto.verify(data, sign, true);
 
 if (!signInfo) {
 	// Подпись не валидна
