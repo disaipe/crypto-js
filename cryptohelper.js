@@ -81,11 +81,11 @@ window.CryptoHelper = function() {
 			const signer = await createSigner();
 			const signedData = await createSignedData();
 
-			signer.propset_Certificate(certificate);
-			signer.propset_Options(crypto.CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN)
+			await signer.propset_Certificate(certificate.$original || certificate);
+			await signer.propset_Options(crypto.CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN)
 
-			signedData.propset_ContentEncoding(crypto.CADESCOM_BASE64_TO_BINARY);
-			signedData.propset_Content(toBase64 ? btoa(data) : data);
+			await signedData.propset_ContentEncoding(crypto.CADESCOM_BASE64_TO_BINARY);
+			await signedData.propset_Content(toBase64 ? btoa(data) : data);
 
 			try {
 				const signedMessage = await signedData.SignCades(signer, crypto.CADESCOM_CADES_BES, SIGN_DETACHED);
