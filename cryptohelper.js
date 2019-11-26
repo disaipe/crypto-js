@@ -19,6 +19,8 @@ window.CryptoHelper = function() {
 				} else {
 					reject(new Error('Cadesplugin not activated'));
 				}
+			}).catch((e) => {
+				reject(e);	
 			});
 		});
 	};
