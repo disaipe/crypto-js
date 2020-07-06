@@ -9,7 +9,7 @@
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/uikit/3.2.0/js/uikit.min.js'></script>
 		<script src='https://www.cryptopro.ru/sites/default/files/products/cades/cadesplugin_api.js'></script>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.8/angular.min.js'></script>
-		<script src='/crypto.js'></script>
+		<script src='/cryptohelper.js'></script>
 		<script>
 			const app = angular.module('App', []);
 
@@ -68,7 +68,7 @@
 
 				$scope.doVerify = () => {
 					crypto
-						.verify($scope.data, $scope.sign)
+						.verify($scope.data, $scope.sign, true)
 						.then((verifyResult) => {
 							if (verifyResult) {
 								$scope.signInfo = verifyResult;
