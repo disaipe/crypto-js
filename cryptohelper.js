@@ -27,12 +27,19 @@ window.CryptoHelper = function() {
 
 	/**
 	 * Get valid certificates from store
+	 * @param {Number} location location of the store to be opened
+	 * @param {String} storeName a string that contains the name of the system certificate store to be opened
+	 * @param {Number} mode open mode of the store
 	 * @returns {Array<Certificate>}
 	 */
-	this.getCertificates = () => {
+	this.getCertificates = (location, storeName, mode) => {
+		const _location = location || crypto.CAPICOM_CURRENT_USER_STORE;
+		const _storeName = storeName || crypto.CAPICOM_MY_STORE;
+		const _mode = mode || crypto.CAPICOM_STORE_OPEN_MAXIMUM_ALLOWED;
+		
 		return new Promise(async (resolve) => {
 			const store = await createStore();
-			store.Open(crypto.CAPICOM_CURRENT_USER_STORE, crypto.CAPICOM_MY_STORE, crypto.CAPICOM_STORE_OPEN_MAXIMUM_ALLOWED);
+			store.Open(_location, _storeName, _mode);
 
 			let certs = await store.Certificates;
 			certs = await certs.Find(crypto.CAPICOM_CERTIFICATE_FIND_TIME_VALID);
